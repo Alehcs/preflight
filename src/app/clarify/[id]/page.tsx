@@ -70,7 +70,7 @@ export default async function ClarifyPage({
             The better the context, the sharper your Preflight Check.
           </p>
         </div>
-        <PageTracker eventName="clarification_started" />
+        <PageTracker eventName="clarification_started" properties={{ checkId: id, demo: id === "demo-check" }} />
         <ClarifyForm
           id={id}
           rawIdea={rawIdea}

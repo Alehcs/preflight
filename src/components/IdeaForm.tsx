@@ -20,7 +20,12 @@ export default function IdeaForm() {
     setError(null);
 
     if (!hasSupabase) {
-      trackEvent("idea_submitted", { demo: true });
+      trackEvent("idea_submitted", {
+        demo: true,
+        ideaLength: rawIdea.trim().length,
+        hasTargetUser: !!targetUserHint.trim(),
+        hasContext: !!context.trim(),
+      });
       router.push("/clarify/demo-check");
       return;
     }
@@ -32,7 +37,12 @@ export default function IdeaForm() {
         targetUserHint: targetUserHint || undefined,
         context: context || undefined,
       });
-      trackEvent("idea_submitted");
+      trackEvent("idea_submitted", {
+        checkId: check.id,
+        ideaLength: rawIdea.trim().length,
+        hasTargetUser: !!targetUserHint.trim(),
+        hasContext: !!context.trim(),
+      });
       router.push(`/clarify/${check.id}`);
     } catch {
       setError(

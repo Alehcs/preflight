@@ -132,7 +132,19 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
   useEffect(() => {
     if (trackedView.current) return;
     trackedView.current = true;
-    if (isDemo) trackEvent("sample_check_viewed");
+    if (isDemo) {
+      trackEvent("sample_check_viewed");
+    } else if (result) {
+      trackEvent("check_results_viewed", {
+        checkId: id,
+        readinessScore: result.buildReadiness.total,
+        recommendation: result.buildReadiness.recommendation,
+        problemSeverity: result.problem.severity,
+        assumptionCount: result.assumptions.length,
+        riskCount: result.risks.length,
+        title: initialCheck.title ?? result.title,
+      });
+    }
   }, [isDemo]);
 
   if (!result) {
@@ -189,7 +201,17 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
         validationExperiment: { ...result!.validationExperiment, description: experimentDescription },
       };
       await updateCheckResult(id, updatedResult);
-      trackEvent("check_saved");
+      const editedFields: string[] = [];
+      if (summary !== (result!.summary ?? "")) editedFields.push("summary");
+      if (workaround !== (result!.currentWorkaround ?? "")) editedFields.push("workaround");
+      if (riskiestText !== (result!.riskiestAssumption.text ?? "")) editedFields.push("riskiestAssumption");
+      if (experimentDescription !== (result!.validationExperiment.description ?? "")) editedFields.push("experimentDescription");
+      trackEvent("check_saved", {
+        checkId: id,
+        editedFields: editedFields.join(","),
+        readinessScore: result!.buildReadiness.total,
+        recommendation: result!.buildReadiness.recommendation,
+      });
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
@@ -210,7 +232,12 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
     setShareStatus("publishing");
     try {
       await publishCheck(id);
-      trackEvent("check_published");
+      trackEvent("check_published", {
+        checkId: id,
+        readinessScore: result!.buildReadiness.total,
+        recommendation: result!.buildReadiness.recommendation,
+        title: initialCheck.title ?? result!.title,
+      });
       setIsPublic(true);
       setShareStatus("idle");
       router.push(`/share/${id}`);
@@ -241,14 +268,26 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
               <CopyButton
                 text={experimentCopyText}
                 label="Copy experiment"
-                onCopy={() => trackEvent("experiment_copied")}
+                onCopy={() => trackEvent("experiment_copied", {
+                  checkId: id,
+                  experimentTitle: result.validationExperiment.title,
+                  stepCount: result.validationExperiment.steps.length,
+                  timeRequired: result.validationExperiment.timeRequired,
+                  copySource: "header",
+                })}
               />
             </span>
             <span className="sm:hidden">
               <CopyButton
                 text={experimentCopyText}
                 label="Copy"
-                onCopy={() => trackEvent("experiment_copied")}
+                onCopy={() => trackEvent("experiment_copied", {
+                  checkId: id,
+                  experimentTitle: result.validationExperiment.title,
+                  stepCount: result.validationExperiment.steps.length,
+                  timeRequired: result.validationExperiment.timeRequired,
+                  copySource: "header",
+                })}
               />
             </span>
             {!isDemo && (
@@ -388,7 +427,13 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
                 successSignal={result.validationExperiment.successSignal}
                 timeRequired={result.validationExperiment.timeRequired}
                 onChangeDescription={setExperimentDescription}
-                onCopy={() => trackEvent("experiment_copied")}
+                onCopy={() => trackEvent("experiment_copied", {
+                  checkId: id,
+                  experimentTitle: result.validationExperiment.title,
+                  stepCount: result.validationExperiment.steps.length,
+                  timeRequired: result.validationExperiment.timeRequired,
+                  copySource: "experiment_card",
+                })}
               />
             </div>
           </div>

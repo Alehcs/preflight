@@ -62,8 +62,16 @@ export default function ClarifyForm({
     e.preventDefault();
     setError(null);
 
+    const answeredQuestionCount = QUESTIONS.filter((q) => (answers[q.id] ?? "").trim().length > 0).length;
+    const totalAnswerLength = Object.values(answers).reduce((sum, a) => sum + (a ?? "").trim().length, 0);
+
     if (id === "demo-check") {
-      trackEvent("clarification_completed", { demo: true });
+      trackEvent("clarification_completed", {
+        demo: true,
+        checkId: id,
+        answeredQuestionCount,
+        totalAnswerLength,
+      });
       router.push("/check/demo-check");
       return;
     }
@@ -95,8 +103,25 @@ export default function ClarifyForm({
         );
       }
 
-      trackEvent("clarification_completed");
-      trackEvent("check_generated");
+      const resData = await res.json().catch(() => ({})) as { result?: Record<string, unknown>; usedFallback?: boolean };
+      const genResult = resData.result ?? {};
+      const br = genResult.buildReadiness as Record<string, unknown> | undefined;
+      const problem = genResult.problem as Record<string, unknown> | undefined;
+
+      trackEvent("clarification_completed", {
+        checkId: id,
+        answeredQuestionCount,
+        totalAnswerLength,
+      });
+      trackEvent("check_generated", {
+        checkId: id,
+        readinessScore: br?.total,
+        recommendation: br?.recommendation,
+        usedFallback: resData.usedFallback ?? false,
+        problemSeverity: problem?.severity,
+        assumptionCount: Array.isArray(genResult.assumptions) ? genResult.assumptions.length : undefined,
+        riskCount: Array.isArray(genResult.risks) ? genResult.risks.length : undefined,
+      });
       router.push(`/check/${id}`);
     } catch (err) {
       setError(
