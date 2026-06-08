@@ -62,7 +62,12 @@ function ShareContent({ check }: { check: PreflightCheck }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageTracker eventName="public_check_viewed" />
+      <PageTracker eventName="public_check_viewed" properties={{
+        checkId: check.id,
+        readinessScore: br.total,
+        recommendation: br.recommendation,
+        checkTitle: title,
+      }} />
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-gray-900 hover:opacity-80 transition-opacity">
