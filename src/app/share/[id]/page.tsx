@@ -1,0 +1,248 @@
+import Link from "next/link";
+import { Plane, ArrowRight, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { mockPreflightCheck } from "@/lib/mockPreflight";
+import { getCheck } from "@/lib/preflightStore";
+import { hasSupabase } from "@/lib/supabase/client";
+import AssumptionCard from "@/components/AssumptionCard";
+import PageTracker from "@/components/PageTracker";
+import type { PreflightCheck } from "@/lib/types";
+
+function scoreColor(score: number) {
+  if (score >= 80) return "text-emerald-600";
+  if (score >= 60) return "text-amber-500";
+  return "text-red-500";
+}
+
+function barColor(score: number) {
+  if (score >= 80) return "bg-emerald-400";
+  if (score >= 60) return "bg-amber-400";
+  return "bg-red-400";
+}
+
+const RECOMMENDATION_CONFIG: Record<string, { label: string; style: string }> = {
+  build_now: { label: "Build now", style: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  validate_first: { label: "Validate first", style: "bg-amber-50 text-amber-700 border border-amber-200" },
+  reshape_idea: { label: "Reshape idea", style: "bg-red-50 text-red-700 border border-red-200" },
+};
+
+function SectionLabel({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
+  return (
+    <p className={`text-xs font-semibold uppercase tracking-widest mb-3 ${light ? "text-indigo-400" : "text-gray-400"}`}>
+      {children}
+    </p>
+  );
+}
+
+function NotPublicPage({ message }: { message: string }) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-sm text-center px-4">
+        <Link href="/" className="inline-flex items-center gap-2 text-gray-900 mb-8 hover:opacity-80 transition-opacity">
+          <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+          <span className="font-semibold tracking-tight">Preflight</span>
+        </Link>
+        <p className="text-gray-600 text-sm mb-6">{message}</p>
+        <Link
+          href="/new"
+          className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors text-sm"
+        >
+          Start a Preflight Check
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ShareContent({ check }: { check: PreflightCheck }) {
+  const result = check.result!;
+  const br = result.buildReadiness;
+  const rec = RECOMMENDATION_CONFIG[br.recommendation];
+  const title = check.title ?? result.title;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PageTracker eventName="public_check_viewed" />
+      <header className="border-b border-gray-200 bg-white">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 text-gray-900 hover:opacity-80 transition-opacity">
+            <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+            <span className="font-semibold tracking-tight">Preflight</span>
+          </Link>
+          <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+            Public check
+          </span>
+        </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-5">
+
+        {/* Decision Summary */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6">
+          <SectionLabel>Decision Summary</SectionLabel>
+          <h1 className="text-xl font-bold text-gray-900 mb-4 leading-tight">{title}</h1>
+
+          <div className="flex items-start gap-5 mb-4">
+            <div className="flex-shrink-0 text-center">
+              <p className={`text-4xl font-bold tabular-nums leading-none ${scoreColor(br.total)}`}>{br.total}</p>
+              <p className="text-gray-400 text-xs mt-0.5">/100</p>
+              <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-lg mt-2 border ${rec.style}`}>
+                {rec.label}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0 pt-1">
+              <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
+                <div
+                  className={`h-1.5 rounded-full ${barColor(br.total)}`}
+                  style={{ width: `${br.total}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <span className="font-semibold text-gray-800">Your next move: </span>
+                {br.explanation}
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Summary</p>
+            <p className="text-gray-700 text-sm leading-relaxed">{result.summary}</p>
+          </div>
+        </div>
+
+        {/* Riskiest Assumption — amber focused warning, not a red alarm */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+            <span className="text-xs font-semibold text-amber-600 uppercase tracking-widest">
+              Highest leverage uncertainty
+            </span>
+          </div>
+          <SectionLabel>Riskiest Assumption</SectionLabel>
+          <p className="text-gray-900 text-base font-semibold leading-snug mb-3">
+            {result.riskiestAssumption.text}
+          </p>
+          <p className="text-amber-700 text-sm leading-relaxed">
+            <span className="font-semibold">Why it&apos;s the riskiest: </span>
+            {result.riskiestAssumption.reason}
+          </p>
+        </div>
+
+        {/* Validation Experiment */}
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 space-y-4">
+          <div>
+            <SectionLabel light>24–48h Validation Experiment</SectionLabel>
+            <p className="text-gray-900 font-semibold text-base">{result.validationExperiment.title}</p>
+            <div className="flex items-center gap-1.5 text-indigo-600 text-xs font-medium mt-1">
+              <Clock className="w-3.5 h-3.5" />
+              {result.validationExperiment.timeRequired}
+            </div>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed">{result.validationExperiment.description}</p>
+          <ol className="space-y-2.5">
+            {result.validationExperiment.steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-200 text-indigo-800 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+          <div className="bg-white border border-indigo-100 rounded-xl px-4 py-3 flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Success signal</p>
+              <p className="text-sm text-gray-700">{result.validationExperiment.successSignal}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Critical Assumptions */}
+        <div>
+          <SectionLabel>Critical Assumptions</SectionLabel>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {result.assumptions.map((a) => (
+              <AssumptionCard key={a.id} {...a} />
+            ))}
+          </div>
+        </div>
+
+        {/* Next Actions */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <SectionLabel>Recommended Next Actions</SectionLabel>
+          <ol className="space-y-3">
+            {result.nextActions.map((action, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <p className="text-sm text-gray-700 leading-snug">{action}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* CTA */}
+        <div className="bg-indigo-600 rounded-2xl p-8 text-center">
+          <p className="text-indigo-200 text-sm mb-2">
+            Building something with AI tools?
+          </p>
+          <h2 className="text-white text-xl font-bold mb-1">
+            Run your own Preflight Check
+          </h2>
+          <p className="text-indigo-300 text-sm mb-6">
+            Paste an idea, answer four questions, get your riskiest assumption and a 24–48h experiment.
+          </p>
+          <Link
+            href="/new"
+            className="inline-flex items-center gap-2 bg-white text-indigo-700 font-semibold px-6 py-3 rounded-xl hover:bg-indigo-50 transition-colors shadow-sm"
+          >
+            Run your own Preflight Check
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="text-indigo-400 text-xs mt-4">
+            Not an idea validator. A build-readiness check.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-400 pb-4">
+          Created with Preflight — the pre-shipping checkpoint for AI builders.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default async function SharePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  if (id === "demo-check") {
+    return <ShareContent check={mockPreflightCheck} />;
+  }
+
+  if (!hasSupabase) {
+    return <NotPublicPage message="This check could not be loaded. Try the sample check to see how Preflight works." />;
+  }
+
+  const check = await getCheck(id);
+
+  if (!check) {
+    return <NotPublicPage message="Check not found." />;
+  }
+
+  if (!check.is_public) {
+    return <NotPublicPage message="This Preflight Check is not public yet." />;
+  }
+
+  if (!check.result) {
+    return <NotPublicPage message="This check has not been generated yet." />;
+  }
+
+  return <ShareContent check={check} />;
+}
