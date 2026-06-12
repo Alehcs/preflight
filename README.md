@@ -2,7 +2,9 @@
 
 **The pre-shipping checkpoint for AI builders.**
 
-Paste a product idea, answer four focused questions, and get a build readiness check with your riskiest assumption and a 24–48h validation experiment — before you start shipping.
+Paste a product idea, answer four focused questions, and get a Preflight Check — a Preflight Score, your riskiest assumption, and a 24–48h validation experiment — before you start shipping.
+
+Preflight is **not an idea validator**. The score reflects how clearly an idea is framed and how ready it is to validate, not whether it will succeed.
 
 ---
 
@@ -16,10 +18,10 @@ Founders, PMs, and solo builders using Cursor, Lovable, Bolt, Replit, v0, Claude
 
 - **Paste your idea** — plain language, any format
 - **Answer 4 product questions** — who, workaround, pain moment, minimum value
-- **Get a Preflight Check** — AI-generated build readiness score (0–100), riskiest assumption, and a 24–48h validation experiment with concrete steps
+- **Get a Preflight Check** — AI-generated Preflight Score (0–100), riskiest assumption, and a 24–48h validation experiment with concrete steps
 - **Edit and save** — refine the generated output
 - **Share publicly** — a clean read-only artifact URL for sharing with teammates or advisors
-- **Demo mode** — works without Supabase or OpenAI configured
+- **Demo mode** — works without Supabase or an AI key configured
 
 ---
 
@@ -31,8 +33,8 @@ Founders, PMs, and solo builders using Cursor, Lovable, Bolt, Replit, v0, Claude
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (Postgres) |
-| AI | OpenAI (gpt-4o-mini default) |
-| Analytics | Novus.ai |
+| AI | DeepSeek (default for deploy) or OpenAI |
+| Analytics | Novus / Pendo |
 | Deployment | Vercel |
 
 ---
@@ -60,23 +62,22 @@ Add the following to your `.env.local`:
 ## Supabase setup
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Run the migration in `supabase/migrations/` via the Supabase dashboard SQL editor or CLI:
-   ```bash
-   npx supabase db push
-   ```
+2. Run `supabase/schema.sql` in the Supabase dashboard SQL editor (creates the `preflight_checks` table)
 3. Copy your project URL and anon key into `.env.local`
 
 ---
 
 ## AI setup
 
-**OpenAI (default)**
-1. Get an API key at [platform.openai.com](https://platform.openai.com)
-2. Set `OPENAI_API_KEY` in `.env.local` (leave `AI_PROVIDER` unset or set it to `openai`)
+The app supports two interchangeable providers behind a single client (`src/lib/ai/client.ts`). The deployed hackathon build uses DeepSeek.
 
-**DeepSeek**
+**DeepSeek (used for deploy)**
 1. Get an API key at [platform.deepseek.com](https://platform.deepseek.com)
 2. Set `AI_PROVIDER=deepseek` and `DEEPSEEK_API_KEY` in `.env.local`
+
+**OpenAI (code default)**
+1. Get an API key at [platform.openai.com](https://platform.openai.com)
+2. Set `OPENAI_API_KEY` in `.env.local` (leave `AI_PROVIDER` unset or set it to `openai`)
 
 Without any AI key the app falls back to a built-in demo result — the full UI still works.
 
@@ -117,7 +118,18 @@ The demo check at `/check/demo-check` works without any configuration.
 3. Add environment variables in the Vercel dashboard
 4. Deploy — Vercel auto-detects Next.js
 
-The app is safe to deploy without Supabase or OpenAI configured. Demo mode works out of the box.
+The app is safe to deploy without Supabase or an AI key configured. Demo mode works out of the box.
+
+---
+
+## Final deployment checklist
+
+- [ ] **Supabase env vars** — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` set; `supabase/schema.sql` applied
+- [ ] **DeepSeek env vars** — `AI_PROVIDER=deepseek`, `DEEPSEEK_API_KEY` set (or OpenAI equivalent)
+- [ ] **Novus/Pendo env var** — `NEXT_PUBLIC_NOVUS_API_KEY` set so events flow to Pendo
+- [ ] **Vercel deploy** — `npm run lint`, `npx tsc --noEmit`, and `npm run build` pass; deploy green
+- [ ] **Public flow test** — run `/new → /clarify/[id] → /check/[id] → Save → Share → /share/[id]` end to end on the deployed URL
+- [ ] **Novus screenshot** — confirm events (e.g. `check_generated`, `check_published`) appear in the Pendo/Novus dashboard and capture a screenshot for the submission
 
 ---
 

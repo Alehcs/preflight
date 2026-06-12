@@ -54,7 +54,7 @@ export default function IdeaForm() {
 
   function useExample() {
     setRawIdea(
-      "An AI study roadmap app for students who feel overwhelmed and don't know what to study next. It generates a personalized weekly plan based on their goal, current level, and available time."
+      "A pre-shipping checkpoint that helps AI builders identify risky assumptions before they build the wrong thing. Paste an idea, answer a few questions, and get your riskiest assumption plus a 24–48h experiment to test it."
     );
   }
 

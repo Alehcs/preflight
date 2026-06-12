@@ -7,7 +7,7 @@ const RECOMMENDATION_CONFIG: Record<
   { label: string; color: string; bg: string; icon: React.ReactNode }
 > = {
   build_now: {
-    label: "Build now",
+    label: "Ready to test",
     color: "text-emerald-700",
     bg: "bg-emerald-50",
     icon: <CheckCircle className="w-4 h-4" />,
@@ -19,7 +19,7 @@ const RECOMMENDATION_CONFIG: Record<
     icon: <AlertTriangle className="w-4 h-4" />,
   },
   reshape_idea: {
-    label: "Reshape idea",
+    label: "Clarify the idea",
     color: "text-red-700",
     bg: "bg-red-50",
     icon: <RefreshCw className="w-4 h-4" />,

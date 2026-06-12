@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/novus";
+
+// Staged copy shown while the AI generates the check, so the wait feels
+// intentional and productized. The last stage holds until generation returns.
+const GENERATION_STAGES = [
+  "Mapping assumptions…",
+  "Stress-testing risks…",
+  "Designing a 24–48h experiment…",
+  "Preparing your Preflight Check…",
+];
 
 const QUESTIONS = [
   {
@@ -56,7 +65,18 @@ export default function ClarifyForm({
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stageIndex, setStageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Advance the staged copy while submitting; hold on the final stage.
+  // stageIndex is reset to 0 in handleSubmit when a run begins.
+  useEffect(() => {
+    if (!isSubmitting) return;
+    const interval = setInterval(() => {
+      setStageIndex((i) => Math.min(i + 1, GENERATION_STAGES.length - 1));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [isSubmitting]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -76,6 +96,7 @@ export default function ClarifyForm({
       return;
     }
 
+    setStageIndex(0);
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/analyze", {
@@ -181,8 +202,8 @@ export default function ClarifyForm({
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Running your Preflight Check…
+              <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+              <span className="transition-opacity">{GENERATION_STAGES[stageIndex]}</span>
             </>
           ) : (
             <>

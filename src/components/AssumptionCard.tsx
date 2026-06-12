@@ -30,10 +30,10 @@ export default function AssumptionCard({
       <p className="text-gray-900 text-sm font-medium leading-snug">{text}</p>
       <p className="text-gray-500 text-xs leading-relaxed">{whyItMatters}</p>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-md border ${RISK_STYLES[riskLevel]}`}>
+        <span className={`font-mono text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md border ${RISK_STYLES[riskLevel]}`}>
           Risk: {riskLevel}
         </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-md border ${EVIDENCE_STYLES[evidenceLevel]}`}>
+        <span className={`font-mono text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md border ${EVIDENCE_STYLES[evidenceLevel]}`}>
           Evidence: {evidenceLevel}
         </span>
       </div>

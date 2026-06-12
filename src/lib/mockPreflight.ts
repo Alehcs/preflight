@@ -1,126 +1,126 @@
 import type { PreflightCheck, PreflightResult } from "./types";
 
 export const mockPreflightResult: PreflightResult = {
-  title: "AI Study Roadmap App",
+  title: "Preflight — a pre-shipping checkpoint for AI builders",
   summary:
-    "A tool that helps overwhelmed students turn broad learning goals into a focused weekly study roadmap. The main risk is whether students feel enough pain around planning to use a separate tool consistently.",
+    "A checkpoint that helps AI builders surface their riskiest assumption before they build the wrong thing. The central risk is behavioral: builders who can ship in an afternoon may not pause to run a structured check first, even if they agree it's useful.",
   user: {
-    label: "Overwhelmed students",
+    label: "Solo AI builders mid-idea",
     description:
-      "Students who want to learn a subject but feel unsure what to study next, how to prioritize topics, or how to stay consistent.",
+      "Founders, PMs, and indie hackers using Cursor, Lovable, Bolt, v0, or Claude who have an idea and are about to start building — the moment between 'I have an idea' and opening their editor.",
   },
   problem: {
     description:
-      "Students often have access to too many resources but lack a clear sequence, feedback loop, and realistic weekly plan.",
-    severity: "medium",
+      "AI tools compress build time to hours, so the cost of building the wrong thing has dropped — and so has the discipline to check assumptions first. Builders skip validation because existing frameworks feel slow or academic.",
+    severity: "high",
   },
   currentWorkaround:
-    "They search YouTube, ask ChatGPT for a plan, save random resources, or copy roadmaps they rarely follow.",
+    "They open Cursor and start building, ask ChatGPT 'is this a good idea?' (and get flattered), or sketch a lean canvas they never revisit.",
   assumptions: [
     {
       id: "a1",
-      text: "Students feel planning is painful enough to try a dedicated roadmap tool.",
+      text: "Solo AI builders will pause to run a 5-minute check instead of opening their editor and building immediately.",
       whyItMatters:
-        "If planning is only a minor annoyance, they may continue using ChatGPT or existing notes instead.",
+        "Confirmed if a builder mid-idea completes a check before writing code; weakened if they say 'useful' but skip it and build anyway. This is the behavior the whole product depends on.",
       riskLevel: "high",
       evidenceLevel: "weak",
     },
     {
       id: "a2",
-      text: "A weekly roadmap is more useful than a long generic learning path.",
+      text: "Builders find the riskiest-assumption output sharp enough to change what they do next.",
       whyItMatters:
-        "The product needs to provide immediate focus, not just another overwhelming plan.",
-      riskLevel: "medium",
-      evidenceLevel: "weak",
-    },
-    {
-      id: "a3",
-      text: "Students will return to update progress after the first generated plan.",
-      whyItMatters:
-        "Retention depends on the app becoming part of the study routine.",
+        "Confirmed if a builder can name a concrete action they changed after reading it; weakened if they call it 'generic' or 'what I already knew'. Generic output makes Preflight feel like a ChatGPT wrapper.",
       riskLevel: "high",
       evidenceLevel: "none",
     },
     {
-      id: "a4",
-      text: "Students trust AI-generated study sequencing.",
+      id: "a3",
+      text: "Builders will run the 24–48h experiment Preflight hands them rather than just reading it.",
       whyItMatters:
-        "If users do not trust the plan, they will treat it as generic advice and ignore it.",
+        "Confirmed if a builder reports actually running the experiment within two days; weakened if the check is read once and closed. Value only lands if the experiment gets executed.",
       riskLevel: "medium",
-      evidenceLevel: "weak",
+      evidenceLevel: "none",
+    },
+    {
+      id: "a4",
+      text: "Builders will share a public check with a teammate or advisor to align on what to validate.",
+      whyItMatters:
+        "Confirmed if public share links get opened by a second person; weakened if checks stay private. Sharing is the main way Preflight spreads without paid growth.",
+      riskLevel: "medium",
+      evidenceLevel: "none",
     },
   ],
   risks: [
     {
       id: "r1",
-      text: "The app becomes a generic roadmap generator.",
+      text: "Preflight reads like generic AI prose and feels like a ChatGPT wrapper.",
       mitigation:
-        "Focus on weekly decisions, progress updates, and small next steps instead of massive roadmaps.",
+        "Force every assumption to name a specific user group, behavior, and the evidence that would confirm or weaken it. Reject vague output like 'users may not want this.'",
     },
     {
       id: "r2",
-      text: "Students generate a plan once and never return.",
+      text: "Builders treat the score as a verdict on whether the idea is good, then dismiss the tool when they disagree.",
       mitigation:
-        "Test whether reminders, progress check-ins, or visible streaks create repeat usage.",
+        "Frame the score as clarity of framing, not likelihood of success, and label recommendations by validation readiness ('Validate first'), not idea quality.",
     },
     {
       id: "r3",
-      text: "The target user is too broad.",
+      text: "The check is read once and never acted on.",
       mitigation:
-        "Start with one niche, such as students learning programming or preparing for exams.",
+        "Lead with one riskiest assumption and one copy-pasteable 24–48h experiment, so the next action is obvious and small.",
     },
   ],
   riskiestAssumption: {
-    text: "Students are willing to use a separate tool, not just ChatGPT, to plan and follow their study roadmap.",
+    text: "Solo AI builders will stop to run a structured check in the moment before building, instead of opening Cursor and building immediately.",
     reason:
-      "The product only works if users see enough recurring value to leave their current lightweight workaround.",
+      "Everything else in Preflight only matters if builders actually pause to use it. Shipping is faster and more fun than reflecting, so the default behavior works against the product — this is the belief most likely to be wrong and cheapest to test this week.",
   },
   validationExperiment: {
-    title: "24-hour roadmap usefulness test",
+    title: "The mid-idea intercept test",
     description:
-      "Create 3 sample weekly roadmaps for one specific student segment and test whether students would use one this week.",
+      "Catch 8 AI builders at the exact moment they have a new idea and measure how many run a Preflight Check before they write any code.",
     steps: [
-      "Pick one segment, such as students learning Python for the first time.",
-      "Interview 5 students and ask how they currently decide what to study next.",
-      "Show each student a sample weekly roadmap.",
-      "Ask them to rate how likely they are to use it this week from 1 to 5.",
-      "Ask what would make the roadmap more trustworthy or useful.",
+      "Find 8 builders actively shipping with AI tools (Cursor/Lovable/Bolt communities, indie hacker Discords).",
+      "When one mentions a new idea, send them the Preflight link and ask them to run it before building.",
+      "Watch whether each one completes a check before writing code, or builds first.",
+      "For everyone who completes it, ask: 'What, if anything, will you do differently now?'",
+      "Log the count that ran it pre-build and the count that named a concrete changed action.",
     ],
     successSignal:
-      "At least 3 out of 5 students rate the roadmap 4 or 5 and can name a specific moment this week when they would use it.",
+      "At least 5 of 8 builders run a check before writing code, and at least 4 of them name a specific action they changed because of it.",
     timeRequired: "24–48 hours",
   },
   interviewQuestions: [
-    "When was the last time you felt unsure what to study next?",
-    "What did you do in that moment?",
-    "What makes a study plan feel useful instead of overwhelming?",
-    "Have you ever abandoned a roadmap? Why?",
-    "Would you use a weekly AI-generated plan this week? Why or why not?",
+    "Walk me through the last time you had an idea and started building — what happened between the idea and the first line of code?",
+    "Did you check anything before building? What, and why that?",
+    "When was the last time you built something and realized later it was the wrong thing?",
+    "What would have to be true for you to spend 5 minutes before building instead of starting right away?",
+    "Who would you send a check like this to before you started?",
   ],
   nextActions: [
-    "Choose one student segment instead of targeting all students.",
-    "Run the 24-hour roadmap usefulness test.",
-    "Build only the smallest version that generates and updates a weekly plan.",
+    "Run the mid-idea intercept test with 8 builders this week.",
+    "Tighten the prompt so the riskiest assumption is never generic — name the user, the behavior, and the evidence.",
+    "Instrument the share flow to see whether public checks get opened by a second person.",
   ],
   buildReadiness: {
-    total: 68,
-    userClarity: 75,
-    problemSharpness: 70,
-    evidenceStrength: 35,
-    validationReadiness: 85,
+    total: 71,
+    userClarity: 82,
+    problemSharpness: 80,
+    evidenceStrength: 30,
+    validationReadiness: 88,
     buildFocus: 75,
     recommendation: "validate_first",
     explanation:
-      "The idea has a clear direction and a testable user problem, but evidence is still weak. Validate whether students care enough to use a dedicated planning tool before building the full product.",
+      "The user and problem are sharply framed and the riskiest assumption is cheap to test, but there's almost no evidence yet that builders will pause to use it. Run the intercept test before investing further in the build.",
   },
 };
 
 export const mockPreflightCheck: PreflightCheck = {
   id: "demo-check",
-  title: "AI Study Roadmap App",
+  title: "Preflight — a pre-shipping checkpoint for AI builders",
   raw_idea:
-    "An AI study roadmap app for students who feel overwhelmed and do not know what to study next.",
-  target_user_hint: null,
+    "A pre-shipping checkpoint that helps AI builders identify risky assumptions before they build the wrong thing.",
+  target_user_hint: "Solo builders shipping with Cursor, Lovable, Bolt, v0, or Claude",
   context: null,
   clarification_answers: {},
   result: mockPreflightResult,

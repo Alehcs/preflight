@@ -27,6 +27,14 @@ Do not use hype. Do not claim the idea is validated.
 Name the actual users, actual behaviors, and actual risks for this specific idea.
 Focus on what must be true for the idea to work.
 
+This is a clarity and validation-readiness check, not a verdict on whether the idea is good or bad.
+Your output is a structured product decision artifact, not prose. Make it scannable and falsifiable.
+Each assumption must be a falsifiable belief — something that could be proven wrong this week — that names:
+  1. a specific user group (not "users" or "people"),
+  2. a specific behavior that group must do, and
+  3. (in whyItMatters) the concrete evidence that would confirm or weaken the assumption.
+Never write a vague assumption like "users may not want this" or "the market may be too small".
+
 Return valid JSON only.
 
 Schema:
@@ -84,18 +92,18 @@ Schema:
 }
 
 Rules:
-- Generate 4 to 6 assumptions.
-- Generate 3 to 5 risks.
-- Generate exactly 5 interview questions.
-- Generate exactly 3 next actions.
-- Scores must be integers from 0 to 100.
+- Generate 4 to 6 assumptions. Each "text" names a specific user group and a specific behavior; each "whyItMatters" states the concrete evidence that would confirm or weaken it.
+- Generate 3 to 5 risks. Each risk is specific to this idea, with a mitigation that is an action, not a platitude.
+- Generate exactly 5 interview questions. Ask about past behavior, not hypothetical intent.
+- Generate exactly 3 next actions, each a concrete step the builder can start today.
+- Scores must be integers from 0 to 100. They measure how clearly the idea is framed and how ready it is to validate — NOT whether the idea will succeed.
 - Evidence strength should usually be "none" or "weak" unless the user cited specific data.
-- The riskiest assumption must be something you can actually test this week.
-- The validation experiment must be completable in 24 to 48 hours with no code.
-- The experiment steps must be concrete actions, not categories.
-- The success signal must be a specific, measurable outcome.
-- Recommendation should usually be "validate_first" unless the user provided strong evidence.
-- summary must be 2-3 sentences max, specific to this idea.
+- The riskiest assumption must be the single belief most likely to be wrong that you can actually test this week. State who must do what.
+- The validation experiment must be completable in 24 to 48 hours with no code and no full product — interviews, a fake door, a manual concierge run, a landing test, or similar.
+- The experiment steps must be concrete actions with real numbers (how many people, what to show, what to ask), not categories.
+- The success signal must be a single measurable, concrete outcome with a threshold (e.g. "at least 4 of 6 do X"), so the builder knows exactly whether the assumption held.
+- Recommendation reflects validation readiness: "build_now" = framing is clear and the riskiest assumption is cheap to test, "validate_first" = test the riskiest assumption first, "reshape_idea" = the user or problem is still too vague to test. Default to "validate_first".
+- summary must be 2-3 sentences max, specific to this idea, naming the user and the central risk.
 - Do not include markdown.
 - Do not include explanations outside JSON.`;
 

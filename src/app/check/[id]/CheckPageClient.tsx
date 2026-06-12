@@ -24,13 +24,14 @@ import RiskCard from "@/components/RiskCard";
 import ExperimentCard from "@/components/ExperimentCard";
 import EditableSection from "@/components/EditableSection";
 import CopyButton from "@/components/CopyButton";
+import ScoreBar from "@/components/ScoreBar";
 
 const REC_CONFIG: Record<
   Recommendation,
   { label: string; color: string; bg: string; border: string; icon: React.ReactNode }
 > = {
   build_now: {
-    label: "Build now",
+    label: "Ready to test",
     color: "text-emerald-700",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
@@ -44,7 +45,7 @@ const REC_CONFIG: Record<
     icon: <AlertTriangle className="w-3.5 h-3.5" />,
   },
   reshape_idea: {
-    label: "Reshape idea",
+    label: "Clarify the idea",
     color: "text-red-700",
     bg: "bg-red-50",
     border: "border-red-200",
@@ -73,15 +74,9 @@ function scoreColor(score: number) {
   return "text-red-500";
 }
 
-function barColor(score: number) {
-  if (score >= 80) return "bg-emerald-400";
-  if (score >= 60) return "bg-amber-400";
-  return "bg-red-400";
-}
-
 function ZoneLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2.5">
+    <p className="font-mono text-[11px] font-semibold text-gray-400 uppercase tracking-[0.16em] mb-2.5">
       {children}
     </p>
   );
@@ -89,10 +84,19 @@ function ZoneLabel({ children }: { children: React.ReactNode }) {
 
 function CardLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
+    <p className="font-mono text-[11px] font-semibold text-gray-400 uppercase tracking-[0.16em] mb-2">
       {children}
     </p>
   );
+}
+
+function formatCheckDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 // p-4 by default — compact snapshot cards. Override className for larger cards.
@@ -129,23 +133,33 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
   const [activeTab, setActiveTab] = useState<TabId>("assumptions");
 
   const trackedView = useRef(false);
+  // Capture mount-time values in a ref so the effect can use [] deps safely.
+  // Ref reads are excluded from exhaustive-deps; this fires exactly once on mount.
+  const mountSnapshot = useRef({
+    isDemo,
+    id,
+    result,
+    title: initialCheck.title ?? result?.title ?? "",
+  });
+
   useEffect(() => {
     if (trackedView.current) return;
     trackedView.current = true;
-    if (isDemo) {
+    const s = mountSnapshot.current;
+    if (s.isDemo) {
       trackEvent("sample_check_viewed");
-    } else if (result) {
+    } else if (s.result) {
       trackEvent("check_results_viewed", {
-        checkId: id,
-        readinessScore: result.buildReadiness.total,
-        recommendation: result.buildReadiness.recommendation,
-        problemSeverity: result.problem.severity,
-        assumptionCount: result.assumptions.length,
-        riskCount: result.risks.length,
-        title: initialCheck.title ?? result.title,
+        checkId: s.id,
+        readinessScore: s.result.buildReadiness.total,
+        recommendation: s.result.buildReadiness.recommendation,
+        problemSeverity: s.result.problem.severity,
+        assumptionCount: s.result.assumptions.length,
+        riskCount: s.result.risks.length,
+        title: s.title,
       });
     }
-  }, [isDemo]);
+  }, []);
 
   if (!result) {
     return (
@@ -176,6 +190,8 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
   const br = result.buildReadiness;
   const title = initialCheck.title ?? result.title;
   const rec = REC_CONFIG[br.recommendation];
+  const checkRef = isDemo ? "PF-SAMPLE" : `PF-${id.slice(0, 8).toUpperCase()}`;
+  const checkDate = formatCheckDate(initialCheck.created_at);
 
   const experimentCopyText = [
     `Validation Experiment: ${result.validationExperiment.title}`,
@@ -249,6 +265,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="livery-stripe" aria-hidden />
       {/* Sticky header */}
       <header className="border-b border-gray-200 bg-white/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
@@ -352,35 +369,46 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
           Breakdown sits below as visually secondary detail.
         */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-          <CardLabel>Decision Summary</CardLabel>
-          <div className="flex items-start gap-5">
+          {/* Document meta row */}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <CardLabel>Decision Summary</CardLabel>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-2 whitespace-nowrap">
+              {checkRef}
+              <span className="hidden sm:inline"> · {checkDate}</span>
+            </p>
+          </div>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight mb-4 -mt-1">
+            {title}
+          </h1>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
             {/* Verdict column: score + badge stacked */}
             <div className="flex-shrink-0 text-center">
-              <p className={`text-4xl font-bold tabular-nums leading-none ${scoreColor(br.total)}`}>
+              <p className="font-mono text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">
+                Preflight Score
+              </p>
+              <p className={`font-mono text-4xl font-bold tabular-nums leading-none ${scoreColor(br.total)}`}>
                 {br.total}
               </p>
-              <p className="text-gray-400 text-xs mt-0.5">/100</p>
+              <p className="font-mono text-gray-400 text-xs mt-0.5">/100</p>
               <div
-                className={`inline-flex items-center gap-1 ${rec.bg} ${rec.color} border ${rec.border} text-xs font-semibold px-2.5 py-1 rounded-lg mt-2 whitespace-nowrap`}
+                className={`inline-flex items-center gap-1.5 ${rec.bg} ${rec.color} border ${rec.border} font-mono text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md mt-2 whitespace-nowrap`}
               >
                 {rec.icon}
                 {rec.label}
               </div>
             </div>
-            {/* Context column: progress bar + next move */}
-            <div className="flex-1 min-w-0 pt-1">
-              <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
-                <div
-                  className={`h-1.5 rounded-full ${barColor(br.total)} transition-all`}
-                  style={{ width: `${br.total}%` }}
-                />
-              </div>
+            {/* Context column: gauge + next move */}
+            <div className="w-full sm:flex-1 sm:min-w-0 sm:pt-1">
+              <ScoreBar score={br.total} className="mb-3" />
               <p className="text-sm text-gray-600 leading-relaxed">
                 <span className="font-semibold text-gray-800">Your next move: </span>
                 {br.explanation}
               </p>
             </div>
           </div>
+          <p className="text-xs text-gray-400 leading-relaxed mt-3">
+            This score reflects how clearly the idea is framed, not whether it will succeed.
+          </p>
           {/* Breakdown — secondary, below the fold of the main verdict */}
           <div className="mt-4 pt-3 border-t border-gray-100">
             <ReadinessBreakdown
@@ -406,11 +434,10 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
             <div className="md:col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                <span className="text-xs font-semibold text-amber-600 uppercase tracking-widest">
-                  Highest leverage uncertainty
+                <span className="font-mono text-[11px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
+                  Riskiest Assumption
                 </span>
               </div>
-              <CardLabel>Riskiest Assumption</CardLabel>
               <EditableSection value={riskiestText} onChange={setRiskiestText} bold />
               <p className="text-amber-700 text-sm leading-relaxed">
                 <span className="font-semibold">Why it&apos;s the riskiest: </span>
@@ -454,7 +481,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
                 {result.problem.description}
               </p>
               <span
-                className={`text-xs font-medium px-2 py-0.5 rounded-md border ${SEVERITY_STYLES[result.problem.severity]}`}
+                className={`font-mono text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md border ${SEVERITY_STYLES[result.problem.severity]}`}
               >
                 Severity: {result.problem.severity}
               </span>

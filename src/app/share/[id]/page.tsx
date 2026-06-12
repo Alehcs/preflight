@@ -5,6 +5,7 @@ import { getCheck } from "@/lib/preflightStore";
 import { hasSupabase } from "@/lib/supabase/client";
 import AssumptionCard from "@/components/AssumptionCard";
 import PageTracker from "@/components/PageTracker";
+import ScoreBar from "@/components/ScoreBar";
 import type { PreflightCheck } from "@/lib/types";
 
 function scoreColor(score: number) {
@@ -13,24 +14,27 @@ function scoreColor(score: number) {
   return "text-red-500";
 }
 
-function barColor(score: number) {
-  if (score >= 80) return "bg-emerald-400";
-  if (score >= 60) return "bg-amber-400";
-  return "bg-red-400";
-}
-
 const RECOMMENDATION_CONFIG: Record<string, { label: string; style: string }> = {
-  build_now: { label: "Build now", style: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  build_now: { label: "Ready to test", style: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
   validate_first: { label: "Validate first", style: "bg-amber-50 text-amber-700 border border-amber-200" },
-  reshape_idea: { label: "Reshape idea", style: "bg-red-50 text-red-700 border border-red-200" },
+  reshape_idea: { label: "Clarify the idea", style: "bg-red-50 text-red-700 border border-red-200" },
 };
 
 function SectionLabel({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <p className={`text-xs font-semibold uppercase tracking-widest mb-3 ${light ? "text-indigo-400" : "text-gray-400"}`}>
+    <p className={`font-mono text-[11px] font-semibold uppercase tracking-[0.16em] mb-3 ${light ? "text-indigo-400" : "text-gray-400"}`}>
       {children}
     </p>
   );
+}
+
+function formatCheckDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 function NotPublicPage({ message }: { message: string }) {
@@ -59,9 +63,12 @@ function ShareContent({ check }: { check: PreflightCheck }) {
   const br = result.buildReadiness;
   const rec = RECOMMENDATION_CONFIG[br.recommendation];
   const title = check.title ?? result.title;
+  const checkRef = check.id === "demo-check" ? "PF-SAMPLE" : `PF-${check.id.slice(0, 8).toUpperCase()}`;
+  const checkDate = formatCheckDate(check.created_at);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="livery-stripe" aria-hidden />
       <PageTracker eventName="public_check_viewed" properties={{
         checkId: check.id,
         readinessScore: br.total,
@@ -74,7 +81,7 @@ function ShareContent({ check }: { check: PreflightCheck }) {
             <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
             <span className="font-semibold tracking-tight">Preflight</span>
           </Link>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md">
             Public check
           </span>
         </div>
@@ -84,24 +91,26 @@ function ShareContent({ check }: { check: PreflightCheck }) {
 
         {/* Decision Summary */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6">
-          <SectionLabel>Decision Summary</SectionLabel>
+          <div className="flex items-center justify-between gap-3">
+            <SectionLabel>Decision Summary</SectionLabel>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3 whitespace-nowrap">
+              {checkRef}
+              <span className="hidden sm:inline"> · {checkDate}</span>
+            </p>
+          </div>
           <h1 className="text-xl font-bold text-gray-900 mb-4 leading-tight">{title}</h1>
 
-          <div className="flex items-start gap-5 mb-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 mb-4">
             <div className="flex-shrink-0 text-center">
-              <p className={`text-4xl font-bold tabular-nums leading-none ${scoreColor(br.total)}`}>{br.total}</p>
-              <p className="text-gray-400 text-xs mt-0.5">/100</p>
-              <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-lg mt-2 border ${rec.style}`}>
+              <p className="font-mono text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">Preflight Score</p>
+              <p className={`font-mono text-4xl font-bold tabular-nums leading-none ${scoreColor(br.total)}`}>{br.total}</p>
+              <p className="font-mono text-gray-400 text-xs mt-0.5">/100</p>
+              <span className={`inline-block font-mono text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md mt-2 border ${rec.style}`}>
                 {rec.label}
               </span>
             </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
-                <div
-                  className={`h-1.5 rounded-full ${barColor(br.total)}`}
-                  style={{ width: `${br.total}%` }}
-                />
-              </div>
+            <div className="w-full sm:flex-1 sm:min-w-0 sm:pt-1">
+              <ScoreBar score={br.total} className="mb-3" />
               <p className="text-sm text-gray-600 leading-relaxed">
                 <span className="font-semibold text-gray-800">Your next move: </span>
                 {br.explanation}
@@ -109,21 +118,24 @@ function ShareContent({ check }: { check: PreflightCheck }) {
             </div>
           </div>
 
+          <p className="text-xs text-gray-400 leading-relaxed mb-4">
+            This score reflects how clearly the idea is framed, not whether it will succeed.
+          </p>
+
           <div className="border-t border-gray-100 pt-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">Summary</p>
+            <p className="font-mono text-[11px] font-semibold text-gray-400 uppercase tracking-[0.16em] mb-1.5">Summary</p>
             <p className="text-gray-700 text-sm leading-relaxed">{result.summary}</p>
           </div>
         </div>
 
         {/* Riskiest Assumption — amber focused warning, not a red alarm */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-            <span className="text-xs font-semibold text-amber-600 uppercase tracking-widest">
-              Highest leverage uncertainty
+            <span className="font-mono text-[11px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
+              Riskiest Assumption
             </span>
           </div>
-          <SectionLabel>Riskiest Assumption</SectionLabel>
           <p className="text-gray-900 text-base font-semibold leading-snug mb-3">
             {result.riskiestAssumption.text}
           </p>
@@ -157,7 +169,7 @@ function ShareContent({ check }: { check: PreflightCheck }) {
           <div className="bg-white border border-indigo-100 rounded-xl px-4 py-3 flex items-start gap-3">
             <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Success signal</p>
+              <p className="font-mono text-[10px] font-semibold text-gray-500 uppercase tracking-[0.14em] mb-1">Success signal</p>
               <p className="text-sm text-gray-700">{result.validationExperiment.successSignal}</p>
             </div>
           </div>
@@ -207,13 +219,13 @@ function ShareContent({ check }: { check: PreflightCheck }) {
             <ArrowRight className="w-4 h-4" />
           </Link>
           <p className="text-indigo-400 text-xs mt-4">
-            Not an idea validator. A build-readiness check.
+            Not an idea validator. A pre-shipping checkpoint.
           </p>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 pb-4">
-          Created with Preflight — the pre-shipping checkpoint for AI builders.
+        <p className="text-center font-mono text-[10px] uppercase tracking-[0.14em] text-gray-400 pb-4">
+          {checkRef} · Created with Preflight — the pre-shipping checkpoint for AI builders
         </p>
       </div>
     </div>

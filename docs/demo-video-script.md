@@ -35,7 +35,7 @@
 
 *[Navigate to /new]*
 
-> "I'll use a real idea — an AI study roadmap app for students who feel overwhelmed and don't know what to study next."
+> "I'll dogfood it — I'll run Preflight on Preflight itself: a pre-shipping checkpoint that helps AI builders spot risky assumptions before they build the wrong thing."
 
 *[Paste the idea into the form]*
 
@@ -63,7 +63,7 @@
 
 ---
 
-## [1:30 – 1:55] Show Build Readiness
+## [1:30 – 1:55] Show the Preflight Score
 
 *[Navigate to /check/[id]]*
 
@@ -71,11 +71,11 @@
 
 *[Point to the score]*
 
-> "Build Readiness Score: 68. Recommendation: Validate first."
+> "Preflight Score: 71. Recommendation: Validate first."
 
-> "The score breaks down across five dimensions — user clarity, problem sharpness, evidence strength, validation readiness, and build focus."
+> "Important — this isn't a verdict on whether the idea is good. The score reflects how clearly the idea is framed and how ready it is to validate. It breaks down across five dimensions — user clarity, problem sharpness, evidence strength, validation readiness, and build focus."
 
-> "This tells me: the idea is directionally sound, but I'm missing evidence before I build."
+> "This tells me: the user and problem are sharp, but I have almost no evidence yet — so validate before building."
 
 ---
 
@@ -85,7 +85,7 @@
 
 > "This is the most important output."
 
-> "Students are willing to use a separate tool — not just ChatGPT — to plan and follow a roadmap."
+> "Solo AI builders will actually stop to run a structured check — instead of opening Cursor and building immediately."
 
 > "That's the single belief most likely to make the whole thing fail. And it's something I can test this week, without writing any code."
 
@@ -97,9 +97,9 @@
 
 > "And here's how."
 
-> "Interview 5 students, show them a sample weekly roadmap, ask if they'd use it this week."
+> "Catch 8 builders the moment they have a new idea, send them Preflight, and count how many run a check before writing any code."
 
-> "Steps, a success signal, time required — 24 to 48 hours."
+> "Concrete steps, a measurable success signal, time required — 24 to 48 hours."
 
 *[Click 'Copy experiment']*
 
