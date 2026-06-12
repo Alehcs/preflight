@@ -26,7 +26,7 @@ export default function AssumptionCard({
   evidenceLevel: EvidenceLevel;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+    <div className="print-avoid bg-white border border-gray-200 rounded-xl p-5 space-y-3">
       <p className="text-gray-900 text-sm font-medium leading-snug">{text}</p>
       <p className="text-gray-500 text-xs leading-relaxed">{whyItMatters}</p>
       <div className="flex items-center gap-2 flex-wrap">

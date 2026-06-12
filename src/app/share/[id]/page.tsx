@@ -3,7 +3,7 @@ import { Plane, ArrowRight, AlertTriangle, Clock, CheckCircle2 } from "lucide-re
 import { mockPreflightCheck } from "@/lib/mockPreflight";
 import { getCheck } from "@/lib/preflightStore";
 import { hasSupabase } from "@/lib/supabase/client";
-import AssumptionCard from "@/components/AssumptionCard";
+import EvidenceMap from "@/components/EvidenceMap";
 import PageTracker from "@/components/PageTracker";
 import ScoreBar from "@/components/ScoreBar";
 import type { PreflightCheck } from "@/lib/types";
@@ -175,29 +175,18 @@ function ShareContent({ check }: { check: PreflightCheck }) {
           </div>
         </div>
 
-        {/* Critical Assumptions */}
+        {/* Evidence Map */}
         <div>
-          <SectionLabel>Critical Assumptions</SectionLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {result.assumptions.map((a) => (
-              <AssumptionCard key={a.id} {...a} />
-            ))}
-          </div>
-        </div>
-
-        {/* Next Actions */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <SectionLabel>Recommended Next Actions</SectionLabel>
-          <ol className="space-y-3">
-            {result.nextActions.map((action, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
-                  {i + 1}.
-                </span>
-                <p className="text-sm text-gray-700 leading-snug">{action}</p>
-              </li>
-            ))}
-          </ol>
+          <SectionLabel>Evidence Map</SectionLabel>
+          <p className="text-sm text-gray-500 leading-relaxed mb-4 -mt-1">
+            The assumptions to test, risks to manage, questions to ask, and actions to take next.
+          </p>
+          <EvidenceMap
+            assumptions={result.assumptions}
+            risks={result.risks}
+            interviewQuestions={result.interviewQuestions}
+            nextActions={result.nextActions}
+          />
         </div>
 
         {/* CTA */}

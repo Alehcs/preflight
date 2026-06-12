@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,13 +9,12 @@ import {
   AlertTriangle,
   MessageSquare,
   ArrowRight,
-  Save,
+  FileDown,
   Loader2,
-  CheckCircle2,
   CheckCircle,
   RefreshCw,
 } from "lucide-react";
-import type { PreflightCheck, Recommendation } from "@/lib/types";
+import type { PreflightCheck, PreflightResult, Recommendation } from "@/lib/types";
 import { updateCheckResult, publishCheck } from "@/lib/preflightStore";
 import { trackEvent } from "@/lib/analytics/novus";
 import ReadinessBreakdown from "@/components/ReadinessBreakdown";
@@ -25,6 +24,7 @@ import ExperimentCard from "@/components/ExperimentCard";
 import EditableSection from "@/components/EditableSection";
 import CopyButton from "@/components/CopyButton";
 import ScoreBar from "@/components/ScoreBar";
+import EvidenceMap from "@/components/EvidenceMap";
 
 const REC_CONFIG: Record<
   Recommendation,
@@ -102,7 +102,7 @@ function formatCheckDate(iso: string) {
 // p-4 by default — compact snapshot cards. Override className for larger cards.
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white border border-gray-200 rounded-2xl p-4 ${className}`}>
+    <div className={`print-avoid bg-white border border-gray-200 rounded-2xl p-4 ${className}`}>
       {children}
     </div>
   );
@@ -115,17 +115,39 @@ interface CheckPageClientProps {
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 type ShareStatus = "idle" | "publishing" | "error";
+type EditableFields = {
+  summary: string;
+  workaround: string;
+  riskiestText: string;
+  experimentDescription: string;
+};
+
+function editedFieldKeys(current: EditableFields, previous: EditableFields) {
+  return (Object.keys(current) as (keyof EditableFields)[]).filter(
+    (key) => current[key] !== previous[key]
+  );
+}
+
+function fieldsMatch(a: EditableFields, b: EditableFields) {
+  return editedFieldKeys(a, b).length === 0;
+}
 
 export default function CheckPageClient({ id, initialCheck }: CheckPageClientProps) {
   const router = useRouter();
   const result = initialCheck.result;
   const isDemo = id === "demo-check";
+  const initialEditableFields: EditableFields = {
+    summary: result?.summary ?? "",
+    workaround: result?.currentWorkaround ?? "",
+    riskiestText: result?.riskiestAssumption.text ?? "",
+    experimentDescription: result?.validationExperiment.description ?? "",
+  };
 
-  const [summary, setSummary] = useState(result?.summary ?? "");
-  const [workaround, setWorkaround] = useState(result?.currentWorkaround ?? "");
-  const [riskiestText, setRiskiestText] = useState(result?.riskiestAssumption.text ?? "");
+  const [summary, setSummary] = useState(initialEditableFields.summary);
+  const [workaround, setWorkaround] = useState(initialEditableFields.workaround);
+  const [riskiestText, setRiskiestText] = useState(initialEditableFields.riskiestText);
   const [experimentDescription, setExperimentDescription] = useState(
-    result?.validationExperiment.description ?? ""
+    initialEditableFields.experimentDescription
   );
   const [isPublic, setIsPublic] = useState(initialCheck.is_public);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -133,6 +155,10 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
   const [activeTab, setActiveTab] = useState<TabId>("assumptions");
 
   const trackedView = useRef(false);
+  const editableFieldsRef = useRef<EditableFields>(initialEditableFields);
+  const persistedFieldsRef = useRef<EditableFields>(initialEditableFields);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const statusResetTimerRef = useRef<number | null>(null);
   // Capture mount-time values in a ref so the effect can use [] deps safely.
   // Ref reads are excluded from exhaustive-deps; this fires exactly once on mount.
   const mountSnapshot = useRef({
@@ -161,6 +187,107 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
     }
   }, []);
 
+  useEffect(() => {
+    editableFieldsRef.current = {
+      summary,
+      workaround,
+      riskiestText,
+      experimentDescription,
+    };
+  }, [experimentDescription, riskiestText, summary, workaround]);
+
+  const enqueueSave = useCallback(
+    (fields: EditableFields) => {
+      if (isDemo || !result) return Promise.resolve();
+
+      const saveTask = saveQueueRef.current.then(async () => {
+        const editedKeys = editedFieldKeys(fields, persistedFieldsRef.current);
+        if (editedKeys.length === 0) return;
+
+        if (statusResetTimerRef.current !== null) {
+          window.clearTimeout(statusResetTimerRef.current);
+          statusResetTimerRef.current = null;
+        }
+        setSaveStatus("saving");
+
+        const updatedResult: PreflightResult = {
+          ...result,
+          summary: fields.summary,
+          currentWorkaround: fields.workaround,
+          riskiestAssumption: {
+            ...result.riskiestAssumption,
+            text: fields.riskiestText,
+          },
+          validationExperiment: {
+            ...result.validationExperiment,
+            description: fields.experimentDescription,
+          },
+        };
+
+        try {
+          await updateCheckResult(id, updatedResult);
+          persistedFieldsRef.current = fields;
+          trackEvent("check_saved", {
+            checkId: id,
+            editedFields: editedKeys
+              .map((key) => (key === "riskiestText" ? "riskiestAssumption" : key))
+              .join(","),
+            readinessScore: result.buildReadiness.total,
+            recommendation: result.buildReadiness.recommendation,
+          });
+
+          if (fieldsMatch(editableFieldsRef.current, fields)) {
+            setSaveStatus("saved");
+            statusResetTimerRef.current = window.setTimeout(() => {
+              setSaveStatus("idle");
+              statusResetTimerRef.current = null;
+            }, 2000);
+          }
+        } catch (error) {
+          setSaveStatus("error");
+          statusResetTimerRef.current = window.setTimeout(() => {
+            setSaveStatus("idle");
+            statusResetTimerRef.current = null;
+          }, 3000);
+          throw error;
+        }
+      });
+
+      saveQueueRef.current = saveTask.catch(() => undefined);
+      return saveTask;
+    },
+    [id, isDemo, result]
+  );
+
+  useEffect(() => {
+    if (isDemo || !result) return;
+
+    const fields = { summary, workaround, riskiestText, experimentDescription };
+    if (fieldsMatch(fields, persistedFieldsRef.current)) return;
+
+    const timer = window.setTimeout(() => {
+      void enqueueSave(editableFieldsRef.current).catch(() => undefined);
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    enqueueSave,
+    experimentDescription,
+    isDemo,
+    result,
+    riskiestText,
+    summary,
+    workaround,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (statusResetTimerRef.current !== null) {
+        window.clearTimeout(statusResetTimerRef.current);
+      }
+    };
+  }, []);
+
   if (!result) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -187,8 +314,9 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
     );
   }
 
-  const br = result.buildReadiness;
-  const title = initialCheck.title ?? result.title;
+  const checkResult = result;
+  const br = checkResult.buildReadiness;
+  const title = initialCheck.title ?? checkResult.title;
   const rec = REC_CONFIG[br.recommendation];
   const checkRef = isDemo ? "PF-SAMPLE" : `PF-${id.slice(0, 8).toUpperCase()}`;
   const checkDate = formatCheckDate(initialCheck.created_at);
@@ -205,56 +333,24 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
     `Time required: ${result.validationExperiment.timeRequired}`,
   ].join("\n");
 
-  async function handleSave() {
-    if (isDemo) return;
-    setSaveStatus("saving");
-    try {
-      const updatedResult = {
-        ...result!,
-        summary,
-        currentWorkaround: workaround,
-        riskiestAssumption: { ...result!.riskiestAssumption, text: riskiestText },
-        validationExperiment: { ...result!.validationExperiment, description: experimentDescription },
-      };
-      await updateCheckResult(id, updatedResult);
-      const editedFields: string[] = [];
-      if (summary !== (result!.summary ?? "")) editedFields.push("summary");
-      if (workaround !== (result!.currentWorkaround ?? "")) editedFields.push("workaround");
-      if (riskiestText !== (result!.riskiestAssumption.text ?? "")) editedFields.push("riskiestAssumption");
-      if (experimentDescription !== (result!.validationExperiment.description ?? "")) editedFields.push("experimentDescription");
-      trackEvent("check_saved", {
-        checkId: id,
-        editedFields: editedFields.join(","),
-        readinessScore: result!.buildReadiness.total,
-        recommendation: result!.buildReadiness.recommendation,
-      });
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch {
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-    }
-  }
-
   async function handleShare() {
     if (isDemo) {
       router.push("/share/demo-check");
       return;
     }
-    if (isPublic) {
-      router.push(`/share/${id}`);
-      return;
-    }
     setShareStatus("publishing");
     try {
-      await publishCheck(id);
-      trackEvent("check_published", {
-        checkId: id,
-        readinessScore: result!.buildReadiness.total,
-        recommendation: result!.buildReadiness.recommendation,
-        title: initialCheck.title ?? result!.title,
-      });
-      setIsPublic(true);
+      await enqueueSave(editableFieldsRef.current);
+      if (!isPublic) {
+        await publishCheck(id);
+        trackEvent("check_published", {
+          checkId: id,
+          readinessScore: checkResult.buildReadiness.total,
+          recommendation: checkResult.buildReadiness.recommendation,
+          title: initialCheck.title ?? checkResult.title,
+        });
+        setIsPublic(true);
+      }
       setShareStatus("idle");
       router.push(`/share/${id}`);
     } catch {
@@ -263,11 +359,21 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
     }
   }
 
+  function handleExportPdf() {
+    trackEvent("pdf_exported", {
+      checkId: id,
+      readinessScore: checkResult.buildReadiness.total,
+      recommendation: checkResult.buildReadiness.recommendation,
+      title,
+    });
+    window.print();
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="livery-stripe" aria-hidden />
       {/* Sticky header */}
-      <header className="border-b border-gray-200 bg-white/95 backdrop-blur sticky top-0 z-10">
+      <header className="print-hidden border-b border-gray-200 bg-white/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <Link
@@ -307,36 +413,15 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
                 })}
               />
             </span>
-            {!isDemo && (
-              <button
-                onClick={handleSave}
-                disabled={saveStatus === "saving"}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors border ${
-                  saveStatus === "saved"
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : saveStatus === "error"
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                {saveStatus === "saving" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : saveStatus === "saved" ? (
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                ) : (
-                  <Save className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">
-                  {saveStatus === "saving"
-                    ? "Saving…"
-                    : saveStatus === "saved"
-                    ? "Saved"
-                    : saveStatus === "error"
-                    ? "Error"
-                    : "Save"}
-                </span>
-              </button>
-            )}
+            <button
+              onClick={handleExportPdf}
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors border bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              aria-label="Export PDF"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Export PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </button>
             <button
               onClick={handleShare}
               disabled={shareStatus === "publishing"}
@@ -355,12 +440,12 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
         </div>
         {shareStatus === "error" && (
           <div className="bg-red-50 border-t border-red-100 px-4 py-2 text-center text-xs text-red-700">
-            Could not publish. Please try again.
+            Could not save changes or publish. Please try again.
           </div>
         )}
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+      <div className="print-artifact max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-5">
 
         {/* ── ZONE 1: DECISION SUMMARY ── */}
         {/*
@@ -368,7 +453,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
           Mobile: single row — score left, badge + bar + explanation right.
           Breakdown sits below as visually secondary detail.
         */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5">
+        <div className="print-avoid bg-white border border-gray-200 rounded-2xl p-5">
           {/* Document meta row */}
           <div className="flex items-center justify-between gap-3 mb-3">
             <CardLabel>Decision Summary</CardLabel>
@@ -428,10 +513,32 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
           sizes to its own content, so a short assumption card won't have empty amber space.
         */}
         <div>
-          <ZoneLabel>Validation Focus</ZoneLabel>
-          <div className="grid grid-cols-1 md:grid-cols-5 md:items-start gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <ZoneLabel>Validation Focus</ZoneLabel>
+            {!isDemo && (
+              <p
+                className={`print-hidden text-[11px] mb-2.5 ${
+                  saveStatus === "error"
+                    ? "text-red-600"
+                    : saveStatus === "saved"
+                    ? "text-green-700"
+                    : "text-gray-400"
+                }`}
+                aria-live="polite"
+              >
+                {saveStatus === "saving"
+                  ? "Saving changes..."
+                  : saveStatus === "saved"
+                  ? "Changes saved"
+                  : saveStatus === "error"
+                  ? "Changes not saved"
+                  : "Saved automatically"}
+              </p>
+            )}
+          </div>
+          <div className="print-validation-grid grid grid-cols-1 md:grid-cols-5 md:items-start gap-4">
             {/* Riskiest Assumption — focused warning, sizes to content */}
-            <div className="md:col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
+            <div className="print-avoid md:col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                 <span className="font-mono text-[11px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
@@ -500,72 +607,83 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
         {/* ── ZONE 4: EVIDENCE MAP ── */}
         <div>
           <ZoneLabel>Evidence Map</ZoneLabel>
-          {/* Segmented control — active tab gets font-semibold + white bg for stronger contrast */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-3">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 text-sm py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "bg-white text-gray-900 font-semibold shadow-sm"
-                    : "text-gray-500 font-medium hover:text-gray-700"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="print-hidden">
+            {/* Segmented control — active tab gets font-semibold + white bg for stronger contrast */}
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-3">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 text-sm py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-white text-gray-900 font-semibold shadow-sm"
+                      : "text-gray-500 font-medium hover:text-gray-700"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "assumptions" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {result.assumptions.map((a) => (
+                  <AssumptionCard key={a.id} {...a} />
+                ))}
+              </div>
+            )}
+
+            {activeTab === "risks" && (
+              <div className="space-y-3">
+                {result.risks.map((r) => (
+                  <RiskCard key={r.id} {...r} />
+                ))}
+              </div>
+            )}
+
+            {activeTab === "questions" && (
+              <Card>
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700">Interview Questions</span>
+                </div>
+                <ol className="space-y-3">
+                  {result.interviewQuestions.map((q, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                      <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
+                        {i + 1}.
+                      </span>
+                      {q}
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            )}
+
+            {activeTab === "actions" && (
+              <Card>
+                <ol className="space-y-3">
+                  {result.nextActions.map((action, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
+                        {i + 1}.
+                      </span>
+                      <p className="text-sm text-gray-700 leading-snug">{action}</p>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            )}
           </div>
 
-          {activeTab === "assumptions" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {result.assumptions.map((a) => (
-                <AssumptionCard key={a.id} {...a} />
-              ))}
-            </div>
-          )}
-
-          {activeTab === "risks" && (
-            <div className="space-y-3">
-              {result.risks.map((r) => (
-                <RiskCard key={r.id} {...r} />
-              ))}
-            </div>
-          )}
-
-          {activeTab === "questions" && (
-            <Card>
-              <div className="flex items-center gap-2 mb-3">
-                <MessageSquare className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-semibold text-gray-700">Interview Questions</span>
-              </div>
-              <ol className="space-y-3">
-                {result.interviewQuestions.map((q, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                    <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
-                      {i + 1}.
-                    </span>
-                    {q}
-                  </li>
-                ))}
-              </ol>
-            </Card>
-          )}
-
-          {activeTab === "actions" && (
-            <Card>
-              <ol className="space-y-3">
-                {result.nextActions.map((action, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
-                      {i + 1}.
-                    </span>
-                    <p className="text-sm text-gray-700 leading-snug">{action}</p>
-                  </li>
-                ))}
-              </ol>
-            </Card>
-          )}
+          <div className="print-only">
+            <EvidenceMap
+              assumptions={result.assumptions}
+              risks={result.risks}
+              interviewQuestions={result.interviewQuestions}
+              nextActions={result.nextActions}
+            />
+          </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 pb-2">

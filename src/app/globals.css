@@ -17,6 +17,10 @@ body {
   color: var(--foreground);
 }
 
+.print-only {
+  display: none;
+}
+
 /* Brand signature: thin indigo rule at the top of every page. */
 .livery-stripe {
   height: 2px;
@@ -31,4 +35,52 @@ body {
   );
   background-size: 26px 26px;
   mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  body {
+    display: block;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-hidden,
+  .livery-stripe {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-artifact {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .print-artifact * {
+    box-shadow: none !important;
+  }
+
+  .print-validation-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .print-validation-grid > * {
+    grid-column: auto !important;
+  }
+
+  .print-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }

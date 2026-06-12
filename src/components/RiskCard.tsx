@@ -8,7 +8,7 @@ export default function RiskCard({
   mitigation: string;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 flex gap-4">
+    <div className="print-avoid bg-white border border-gray-200 rounded-xl p-5 flex gap-4">
       <div className="flex-shrink-0 mt-0.5">
         <ShieldAlert className="w-4 h-4 text-amber-600" />
       </div>

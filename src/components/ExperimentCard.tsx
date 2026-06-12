@@ -34,7 +34,7 @@ export default function ExperimentCard({
   ].join("\n");
 
   return (
-    <div className="bg-white border border-gray-200 border-l-2 border-l-indigo-600 rounded-2xl p-6 space-y-5">
+    <div className="print-avoid bg-white border border-gray-200 border-l-2 border-l-indigo-600 rounded-2xl p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-mono text-[10px] font-semibold text-indigo-600 uppercase tracking-[0.14em] mb-1.5">
@@ -46,7 +46,9 @@ export default function ExperimentCard({
             {timeRequired}
           </div>
         </div>
-        <CopyButton text={copyText} label="Copy" variant="ghost" onCopy={onCopy} />
+        <span className="print-hidden">
+          <CopyButton text={copyText} label="Copy" variant="ghost" onCopy={onCopy} />
+        </span>
       </div>
 
       {onChangeDescription ? (
