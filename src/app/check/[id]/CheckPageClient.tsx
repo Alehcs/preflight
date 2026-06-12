@@ -22,7 +22,6 @@ import AssumptionCard from "@/components/AssumptionCard";
 import RiskCard from "@/components/RiskCard";
 import ExperimentCard from "@/components/ExperimentCard";
 import EditableSection from "@/components/EditableSection";
-import CopyButton from "@/components/CopyButton";
 import ScoreBar from "@/components/ScoreBar";
 import EvidenceMap from "@/components/EvidenceMap";
 
@@ -321,18 +320,6 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
   const checkRef = isDemo ? "PF-SAMPLE" : `PF-${id.slice(0, 8).toUpperCase()}`;
   const checkDate = formatCheckDate(initialCheck.created_at);
 
-  const experimentCopyText = [
-    `Validation Experiment: ${result.validationExperiment.title}`,
-    "",
-    experimentDescription,
-    "",
-    "Steps:",
-    ...result.validationExperiment.steps.map((s, i) => `${i + 1}. ${s}`),
-    "",
-    `Success signal: ${result.validationExperiment.successSignal}`,
-    `Time required: ${result.validationExperiment.timeRequired}`,
-  ].join("\n");
-
   async function handleShare() {
     if (isDemo) {
       router.push("/share/demo-check");
@@ -387,35 +374,9 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
             <p className="text-gray-500 text-sm truncate hidden sm:block">{title}</p>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="hidden sm:block">
-              <CopyButton
-                text={experimentCopyText}
-                label="Copy experiment"
-                onCopy={() => trackEvent("experiment_copied", {
-                  checkId: id,
-                  experimentTitle: result.validationExperiment.title,
-                  stepCount: result.validationExperiment.steps.length,
-                  timeRequired: result.validationExperiment.timeRequired,
-                  copySource: "header",
-                })}
-              />
-            </span>
-            <span className="sm:hidden">
-              <CopyButton
-                text={experimentCopyText}
-                label="Copy"
-                onCopy={() => trackEvent("experiment_copied", {
-                  checkId: id,
-                  experimentTitle: result.validationExperiment.title,
-                  stepCount: result.validationExperiment.steps.length,
-                  timeRequired: result.validationExperiment.timeRequired,
-                  copySource: "header",
-                })}
-              />
-            </span>
             <button
               onClick={handleExportPdf}
-              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors border bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 sm:px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               aria-label="Export PDF"
             >
               <FileDown className="w-3.5 h-3.5" />
@@ -425,14 +386,15 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
             <button
               onClick={handleShare}
               disabled={shareStatus === "publishing"}
-              className="flex items-center gap-1.5 text-sm font-medium bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-indigo-600 bg-indigo-600 px-2.5 sm:px-3 text-sm font-medium text-white transition-colors hover:border-indigo-700 hover:bg-indigo-700 disabled:opacity-60"
+              aria-label={shareStatus === "publishing" ? "Publishing" : "Share"}
             >
               {shareStatus === "publishing" ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Share2 className="w-3.5 h-3.5" />
               )}
-              <span className="hidden sm:inline">
+              <span>
                 {shareStatus === "publishing" ? "Publishing…" : "Share"}
               </span>
             </button>

@@ -12,6 +12,7 @@ declare global {
     pendo?: {
       track: (eventName: string, properties?: Record<string, unknown>) => void;
       initialize: (options: Record<string, unknown>) => void;
+      pageLoad?: () => void;
     };
   }
 }
