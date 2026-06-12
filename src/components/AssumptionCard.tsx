@@ -4,12 +4,12 @@ type EvidenceLevel = "strong" | "moderate" | "weak" | "none";
 const RISK_STYLES: Record<RiskLevel, string> = {
   high: "bg-red-50 text-red-700 border-red-100",
   medium: "bg-amber-50 text-amber-700 border-amber-100",
-  low: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  low: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
 const EVIDENCE_STYLES: Record<EvidenceLevel, string> = {
-  strong: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  moderate: "bg-blue-50 text-blue-700 border-blue-100",
+  strong: "bg-green-50 text-green-700 border-green-100",
+  moderate: "bg-gray-50 text-gray-600 border-gray-200",
   weak: "bg-amber-50 text-amber-700 border-amber-100",
   none: "bg-gray-100 text-gray-500 border-gray-200",
 };

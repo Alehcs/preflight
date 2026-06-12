@@ -9,20 +9,20 @@ import ScoreBar from "@/components/ScoreBar";
 import type { PreflightCheck } from "@/lib/types";
 
 function scoreColor(score: number) {
-  if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-amber-500";
-  return "text-red-500";
+  if (score >= 80) return "text-green-700";
+  if (score >= 60) return "text-amber-600";
+  return "text-red-600";
 }
 
 const RECOMMENDATION_CONFIG: Record<string, { label: string; style: string }> = {
-  build_now: { label: "Ready to test", style: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  build_now: { label: "Ready to test", style: "bg-green-50 text-green-700 border border-green-200" },
   validate_first: { label: "Validate first", style: "bg-amber-50 text-amber-700 border border-amber-200" },
   reshape_idea: { label: "Clarify the idea", style: "bg-red-50 text-red-700 border border-red-200" },
 };
 
 function SectionLabel({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <p className={`font-mono text-[11px] font-semibold uppercase tracking-[0.16em] mb-3 ${light ? "text-indigo-400" : "text-gray-400"}`}>
+    <p className={`font-mono text-[11px] font-semibold uppercase tracking-[0.16em] mb-3 ${light ? "text-indigo-600" : "text-gray-400"}`}>
       {children}
     </p>
   );
@@ -131,7 +131,7 @@ function ShareContent({ check }: { check: PreflightCheck }) {
         {/* Riskiest Assumption — amber focused warning, not a red alarm */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
             <span className="font-mono text-[11px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
               Riskiest Assumption
             </span>
@@ -146,11 +146,11 @@ function ShareContent({ check }: { check: PreflightCheck }) {
         </div>
 
         {/* Validation Experiment */}
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 space-y-4">
+        <div className="bg-white border border-gray-200 border-l-2 border-l-indigo-600 rounded-2xl p-6 space-y-4">
           <div>
             <SectionLabel light>24–48h Validation Experiment</SectionLabel>
             <p className="text-gray-900 font-semibold text-base">{result.validationExperiment.title}</p>
-            <div className="flex items-center gap-1.5 text-indigo-600 text-xs font-medium mt-1">
+            <div className="flex items-center gap-1.5 text-gray-500 text-xs font-medium mt-1">
               <Clock className="w-3.5 h-3.5" />
               {result.validationExperiment.timeRequired}
             </div>
@@ -159,15 +159,15 @@ function ShareContent({ check }: { check: PreflightCheck }) {
           <ol className="space-y-2.5">
             {result.validationExperiment.steps.map((step, i) => (
               <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-200 text-indigo-800 text-xs font-bold flex items-center justify-center mt-0.5">
-                  {i + 1}
+                <span className="flex-shrink-0 font-mono text-xs font-semibold text-gray-400 w-4 pt-0.5">
+                  {i + 1}.
                 </span>
                 {step}
               </li>
             ))}
           </ol>
-          <div className="bg-white border border-indigo-100 rounded-xl px-4 py-3 flex items-start gap-3">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+          <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 text-green-700 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-mono text-[10px] font-semibold text-gray-500 uppercase tracking-[0.14em] mb-1">Success signal</p>
               <p className="text-sm text-gray-700">{result.validationExperiment.successSignal}</p>
@@ -191,8 +191,8 @@ function ShareContent({ check }: { check: PreflightCheck }) {
           <ol className="space-y-3">
             {result.nextActions.map((action, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">
-                  {i + 1}
+                <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
+                  {i + 1}.
                 </span>
                 <p className="text-sm text-gray-700 leading-snug">{action}</p>
               </li>

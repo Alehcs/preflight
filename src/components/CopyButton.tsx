@@ -32,7 +32,7 @@ export default function CopyButton({
     <button onClick={handleCopy} className={base}>
       {copied ? (
         <>
-          <Check className="w-3.5 h-3.5 text-emerald-500" />
+          <Check className="w-3.5 h-3.5 text-green-700" />
           Copied!
         </>
       ) : (

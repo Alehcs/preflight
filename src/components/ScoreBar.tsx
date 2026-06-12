@@ -1,9 +1,9 @@
 const SEGMENTS = 20;
 
 function segmentColor(score: number) {
-  if (score >= 80) return "bg-emerald-500";
-  if (score >= 60) return "bg-amber-400";
-  return "bg-red-400";
+  if (score >= 80) return "bg-green-600";
+  if (score >= 60) return "bg-amber-500";
+  return "bg-red-500";
 }
 
 /** Segmented gauge — reads as an instrument readout rather than a loading bar. */

@@ -42,12 +42,8 @@ export default function LandingHero() {
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6">
         {/* Hero */}
         <div className="pt-16 pb-12 text-center">
-          <div className="inline-flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-700 bg-white/80 border border-indigo-200 px-3.5 py-1.5 rounded-md mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden />
-            <span className="whitespace-nowrap">Pre-shipping checkpoint</span>
-            <span className="hidden sm:inline whitespace-nowrap text-indigo-400">
-              · for AI builders
-            </span>
+          <div className="inline-flex items-center font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-gray-500 bg-white border border-gray-200 px-3.5 py-1.5 rounded-md mb-8">
+            Pre-shipping checkpoint
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1] mb-5">
             Before you build it,{" "}
@@ -100,7 +96,7 @@ export default function LandingHero() {
           {STEPS.map(({ step, label, sub }) => (
             <div key={step} className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center gap-3 mb-3">
-                <span className="font-mono text-xs font-semibold text-indigo-600 tracking-wider">
+                <span className="font-mono text-xs font-semibold text-gray-400 tracking-wider">
                   {step}
                 </span>
                 <span className="flex-1 h-px bg-gray-200" aria-hidden />
@@ -132,7 +128,7 @@ export default function LandingHero() {
                 Preflight Score
               </p>
               <div className="flex items-center gap-4">
-                <span className="font-mono text-4xl font-bold text-amber-500 tabular-nums">71</span>
+                <span className="font-mono text-4xl font-bold text-amber-600 tabular-nums">71</span>
                 <div className="flex-1">
                   <ScoreBar score={71} className="mb-2.5" />
                   <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 font-mono text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md">
@@ -142,9 +138,9 @@ export default function LandingHero() {
               </div>
             </div>
             {/* Riskiest Assumption */}
-            <div className="px-6 py-4 bg-amber-50 border-b border-amber-100">
+            <div className="px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-1.5 mb-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                 <p className="font-mono text-[10px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
                   Riskiest Assumption
                 </p>
@@ -154,9 +150,9 @@ export default function LandingHero() {
               </p>
             </div>
             {/* Experiment */}
-            <div className="px-6 py-4 bg-indigo-50">
+            <div className="px-6 py-4">
               <div className="flex items-center gap-1.5 mb-2">
-                <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                <Clock className="w-3.5 h-3.5 text-indigo-600" />
                 <p className="font-mono text-[10px] font-semibold text-indigo-600 uppercase tracking-[0.16em]">
                   24–48h Validation Experiment
                 </p>

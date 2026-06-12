@@ -17,24 +17,18 @@ body {
   color: var(--foreground);
 }
 
-/* Brand signature: thin indigo rule with an amber wingtip, top of every page. */
+/* Brand signature: thin indigo rule at the top of every page. */
 .livery-stripe {
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--color-indigo-600) 0,
-    var(--color-indigo-600) calc(100% - 56px),
-    var(--color-amber-400) calc(100% - 56px),
-    var(--color-amber-400) 100%
-  );
+  height: 2px;
+  background: var(--color-indigo-600);
 }
 
 /* Faint blueprint dot grid for the landing hero, fading downward. */
 .bg-blueprint {
   background-image: radial-gradient(
-    color-mix(in srgb, var(--color-indigo-600) 13%, transparent) 1px,
+    color-mix(in srgb, var(--color-indigo-600) 8%, transparent) 1px,
     transparent 1px
   );
-  background-size: 22px 22px;
-  mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
 }

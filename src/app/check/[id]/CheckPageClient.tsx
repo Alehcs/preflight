@@ -32,9 +32,9 @@ const REC_CONFIG: Record<
 > = {
   build_now: {
     label: "Ready to test",
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    color: "text-green-700",
+    bg: "bg-green-50",
+    border: "border-green-200",
     icon: <CheckCircle className="w-3.5 h-3.5" />,
   },
   validate_first: {
@@ -56,7 +56,7 @@ const REC_CONFIG: Record<
 const SEVERITY_STYLES: Record<string, string> = {
   high: "bg-red-50 text-red-700 border-red-100",
   medium: "bg-amber-50 text-amber-700 border-amber-100",
-  low: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  low: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
 type TabId = "assumptions" | "risks" | "questions" | "actions";
@@ -69,9 +69,9 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 function scoreColor(score: number) {
-  if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-amber-500";
-  return "text-red-500";
+  if (score >= 80) return "text-green-700";
+  if (score >= 60) return "text-amber-600";
+  return "text-red-600";
 }
 
 function ZoneLabel({ children }: { children: React.ReactNode }) {
@@ -313,7 +313,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
                 disabled={saveStatus === "saving"}
                 className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors border ${
                   saveStatus === "saved"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    ? "bg-green-50 text-green-700 border-green-200"
                     : saveStatus === "error"
                     ? "bg-red-50 text-red-700 border-red-200"
                     : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
@@ -433,7 +433,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
             {/* Riskiest Assumption — focused warning, sizes to content */}
             <div className="md:col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                 <span className="font-mono text-[11px] font-semibold text-amber-600 uppercase tracking-[0.16em]">
                   Riskiest Assumption
                 </span>
@@ -536,13 +536,13 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
           {activeTab === "questions" && (
             <Card>
               <div className="flex items-center gap-2 mb-3">
-                <MessageSquare className="w-4 h-4 text-indigo-500" />
+                <MessageSquare className="w-4 h-4 text-gray-400" />
                 <span className="text-sm font-semibold text-gray-700">Interview Questions</span>
               </div>
               <ol className="space-y-3">
                 {result.interviewQuestions.map((q, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                    <span className="flex-shrink-0 text-indigo-400 font-semibold w-4 text-xs pt-0.5">
+                    <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
                       {i + 1}.
                     </span>
                     {q}
@@ -557,8 +557,8 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
               <ol className="space-y-3">
                 {result.nextActions.map((action, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">
-                      {i + 1}
+                    <span className="flex-shrink-0 font-mono text-gray-400 font-semibold w-4 text-xs pt-0.5">
+                      {i + 1}.
                     </span>
                     <p className="text-sm text-gray-700 leading-snug">{action}</p>
                   </li>

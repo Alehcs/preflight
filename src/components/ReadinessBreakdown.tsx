@@ -9,9 +9,9 @@ const DIMENSIONS = [
 type DimensionKey = (typeof DIMENSIONS)[number]["key"];
 
 function barColor(score: number) {
-  if (score >= 80) return "bg-emerald-400";
-  if (score >= 60) return "bg-amber-400";
-  return "bg-red-400";
+  if (score >= 80) return "bg-green-600";
+  if (score >= 60) return "bg-amber-500";
+  return "bg-red-500";
 }
 
 export default function ReadinessBreakdown(
