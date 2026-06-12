@@ -21,8 +21,11 @@ export const metadata: Metadata = {
 const novusKey = process.env.NEXT_PUBLIC_NOVUS_API_KEY;
 
 // Pendo (Novus) bootstrap snippet — queues calls until the SDK loads from CDN.
+// Visitor IDs are generated per-browser and persisted in localStorage so that
+// each unique browser is counted as a distinct visitor. Falling back to a random
+// ephemeral ID (never the literal string 'anonymous') if localStorage is blocked.
 const pendoSnippet = novusKey
-  ? `(function(apiKey){(function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');})('${novusKey}');pendo.initialize({visitor:{id:'anonymous'}});`
+  ? `(function(apiKey){(function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');})('${novusKey}');(function(){var k='pf_vid',id;try{id=localStorage.getItem(k);if(!id){id='anon-'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem(k,id);}}catch(e){id='anon-'+Math.random().toString(36).slice(2);}pendo.initialize({visitor:{id:id}});})();`
   : null;
 
 export default function RootLayout({
