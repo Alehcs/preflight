@@ -4,7 +4,6 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Plane,
   Share2,
   AlertTriangle,
   MessageSquare,
@@ -24,6 +23,7 @@ import ExperimentCard from "@/components/ExperimentCard";
 import EditableSection from "@/components/EditableSection";
 import ScoreBar from "@/components/ScoreBar";
 import EvidenceMap from "@/components/EvidenceMap";
+import BrandLogo from "@/components/BrandLogo";
 
 const REC_CONFIG: Record<
   Recommendation,
@@ -292,7 +292,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-sm text-center px-4">
           <Link href="/" className="inline-flex items-center gap-1.5 text-gray-900 mb-8">
-            <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+            <BrandLogo />
             <span className="font-semibold tracking-tight">Preflight</span>
           </Link>
           <p className="text-gray-900 font-semibold mb-2">
@@ -367,7 +367,7 @@ export default function CheckPageClient({ id, initialCheck }: CheckPageClientPro
               href="/"
               className="flex items-center gap-1.5 text-gray-900 hover:opacity-80 transition-opacity flex-shrink-0"
             >
-              <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+              <BrandLogo />
               <span className="font-semibold tracking-tight text-sm">Preflight</span>
             </Link>
             <span className="text-gray-300 hidden sm:block">/</span>

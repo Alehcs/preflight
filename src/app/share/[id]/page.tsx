@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Plane, ArrowRight, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowRight, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { mockPreflightCheck } from "@/lib/mockPreflight";
 import { getCheck } from "@/lib/preflightStore";
 import { hasSupabase } from "@/lib/supabase/client";
 import EvidenceMap from "@/components/EvidenceMap";
 import PageTracker from "@/components/PageTracker";
 import ScoreBar from "@/components/ScoreBar";
+import BrandLogo from "@/components/BrandLogo";
 import type { PreflightCheck } from "@/lib/types";
 
 function scoreColor(score: number) {
@@ -42,7 +43,7 @@ function NotPublicPage({ message }: { message: string }) {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-sm text-center px-4">
         <Link href="/" className="inline-flex items-center gap-2 text-gray-900 mb-8 hover:opacity-80 transition-opacity">
-          <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+          <BrandLogo />
           <span className="font-semibold tracking-tight">Preflight</span>
         </Link>
         <p className="text-gray-600 text-sm mb-6">{message}</p>
@@ -78,7 +79,7 @@ function ShareContent({ check }: { check: PreflightCheck }) {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-gray-900 hover:opacity-80 transition-opacity">
-            <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+            <BrandLogo />
             <span className="font-semibold tracking-tight">Preflight</span>
           </Link>
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md">

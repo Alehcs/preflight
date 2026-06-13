@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Plane, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import CheckPageClient from "./CheckPageClient";
+import BrandLogo from "@/components/BrandLogo";
 import { getCheck } from "@/lib/preflightStore";
 import { mockPreflightCheck } from "@/lib/mockPreflight";
 import { hasSupabase } from "@/lib/supabase/client";
@@ -10,7 +11,7 @@ function ErrorPage({ message, sub }: { message: string; sub?: string }) {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-sm text-center px-4">
         <Link href="/" className="inline-flex items-center gap-1.5 text-gray-900 mb-8 hover:opacity-80 transition-opacity">
-          <Plane className="w-4 h-4 text-indigo-600" strokeWidth={2} />
+          <BrandLogo />
           <span className="font-semibold tracking-tight">Preflight</span>
         </Link>
         <p className="text-gray-900 font-semibold mb-2">{message}</p>
